@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from datetime import timedelta
 
 # Set page config for wide layout
 st.set_page_config(page_title="SuperStore Enhanced KPI Dashboard", layout="wide")
@@ -82,8 +81,7 @@ time_granularity = st.sidebar.radio("Select Time Granularity", options=["Daily",
 st.title("SuperStore Enhanced KPI Dashboard")
 st.markdown(
     "This interactive dashboard provides a deep dive into SuperStore's performance. "
-    "Adjust the filters and time granularity to explore trends, compare segments, and "
-    "evaluate performance against a previous period."
+    "Adjust the filters and time granularity to explore trends and compare segments."
 )
 
 # ---- KPI Calculations for Current Period ----
@@ -94,31 +92,6 @@ else:
     total_quantity = df_filtered["Quantity"].sum()
     total_profit = df_filtered["Profit"].sum()
     margin_rate = total_profit / total_sales if total_sales != 0 else 0
-
-# ---- Historical Comparison: Previous Period ----
-period_length = pd.to_datetime(to_date) - pd.to_datetime(from_date)
-previous_from = pd.to_datetime(from_date) - period_length - timedelta(days=1)
-previous_to = pd.to_datetime(from_date) - timedelta(days=1)
-df_previous = df_original[(df_original["Order Date"] >= previous_from) &
-                          (df_original["Order Date"] <= previous_to)]
-
-# Apply same filters to previous period data
-if selected_regions:
-    df_previous = df_previous[df_previous["Region"].isin(selected_regions)]
-if selected_states:
-    df_previous = df_previous[df_previous["State"].isin(selected_states)]
-if selected_categories:
-    df_previous = df_previous[df_previous["Category"].isin(selected_categories)]
-if selected_subcats:
-    df_previous = df_previous[df_previous["Sub-Category"].isin(selected_subcats)]
-
-if df_previous.empty:
-    prev_sales = prev_quantity = prev_profit = prev_margin = 0
-else:
-    prev_sales = df_previous["Sales"].sum()
-    prev_quantity = df_previous["Quantity"].sum()
-    prev_profit = df_previous["Profit"].sum()
-    prev_margin = prev_profit / prev_sales if prev_sales != 0 else 0
 
 # ---- Custom CSS for KPI Tiles ----
 st.markdown(
@@ -148,8 +121,8 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# ---- KPI Display (Including Change from Previous Period) ----
-kpi_col1, kpi_col2, kpi_col3, kpi_col4, kpi_col5 = st.columns(5)
+# ---- KPI Display (No Previous Period Comparison) ----
+kpi_col1, kpi_col2, kpi_col3, kpi_col4 = st.columns(4)
 
 with kpi_col1:
     st.markdown(
@@ -195,41 +168,9 @@ with kpi_col4:
         unsafe_allow_html=True
     )
 
-# Determine which KPI to display for historical comparison
+# ---- KPI Selection for Charts ----
 kpi_options = ["Sales", "Quantity", "Profit", "Margin Rate"]
 selected_kpi = st.radio("Select KPI to Visualize", options=kpi_options, horizontal=True)
-
-def get_kpi_value(dataframe, kpi):
-    if dataframe.empty:
-        return 0
-    if kpi == "Sales":
-        return dataframe["Sales"].sum()
-    elif kpi == "Quantity":
-        return dataframe["Quantity"].sum()
-    elif kpi == "Profit":
-        return dataframe["Profit"].sum()
-    elif kpi == "Margin Rate":
-        sales_sum = dataframe["Sales"].sum()
-        profit_sum = dataframe["Profit"].sum()
-        return profit_sum / sales_sum if sales_sum != 0 else 0
-
-current_kpi_value = get_kpi_value(df_filtered, selected_kpi)
-previous_kpi_value = get_kpi_value(df_previous, selected_kpi)
-if previous_kpi_value != 0:
-    kpi_change = ((current_kpi_value - previous_kpi_value) / previous_kpi_value) * 100
-else:
-    kpi_change = 0
-
-with kpi_col5:
-    st.markdown(
-        f"""
-        <div class='kpi-box'>
-            <div class='kpi-title'>Change from Previous Period</div>
-            <div class='kpi-value'>{kpi_change:+.2f}%</div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
 
 # ---- Visualizations ----
 if df_filtered.empty:
@@ -284,10 +225,9 @@ else:
 # ---- Narrative Summary ----
 st.markdown("#### Insights & Commentary")
 st.markdown(
-    "Use the radio button to switch between KPIs (Sales, Quantity, Profit, Margin Rate). "
+    "Use the radio button above to switch between KPIs (Sales, Quantity, Profit, Margin Rate). "
     "The chart on the left shows how your selected KPI changes over time at the chosen granularity. "
-    "On the right, you can see which products lead in terms of that KPI. "
-    "You can also see how the current KPI compares to a previous period in the last KPI tile."
+    "On the right, you can see which products lead in terms of that KPI."
 )
 
 # ---- Data Drill-Down Section ----
