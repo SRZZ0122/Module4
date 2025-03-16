@@ -2,10 +2,8 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# Set page config for wide layout
 st.set_page_config(page_title="SuperStore Enhanced KPI Dashboard", layout="wide")
 
-# ---- Load Data ----
 @st.cache_data
 def load_data():
     """
@@ -20,7 +18,6 @@ def load_data():
 
 df_original = load_data()
 
-# ---- Sidebar: Filters & Help ----
 st.sidebar.header("Dashboard Help")
 st.sidebar.info(
     "Use the filters below to refine your data. You can select multiple values "
@@ -77,14 +74,12 @@ df_filtered = df_filtered[(df_filtered["Order Date"] >= pd.to_datetime(from_date
 st.sidebar.header("Time Granularity")
 time_granularity = st.sidebar.radio("Select Time Granularity", options=["Daily", "Weekly", "Monthly"])
 
-# ---- Main Page: Title & Narrative ----
 st.title("SuperStore Enhanced KPI Dashboard")
 st.markdown(
     "This interactive dashboard provides a deep dive into SuperStore's performance. "
     "Adjust the filters and time granularity to explore trends and compare segments."
 )
 
-# ---- KPI Calculations for Current Period ----
 if df_filtered.empty:
     total_sales = total_quantity = total_profit = margin_rate = 0
 else:
@@ -93,7 +88,6 @@ else:
     total_profit = df_filtered["Profit"].sum()
     margin_rate = total_profit / total_sales if total_sales != 0 else 0
 
-# ---- Custom CSS for KPI Tiles ----
 st.markdown(
     """
     <style>
@@ -121,7 +115,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# ---- KPI Display (No Previous Period Comparison) ----
 kpi_col1, kpi_col2, kpi_col3, kpi_col4 = st.columns(4)
 
 with kpi_col1:
@@ -168,11 +161,9 @@ with kpi_col4:
         unsafe_allow_html=True
     )
 
-# ---- KPI Selection for Charts ----
 kpi_options = ["Sales", "Quantity", "Profit", "Margin Rate"]
 selected_kpi = st.radio("Select KPI to Visualize", options=kpi_options, horizontal=True)
 
-# ---- Visualizations ----
 if df_filtered.empty:
     st.warning("No data available for the selected filters and date range.")
 else:
@@ -222,14 +213,11 @@ else:
         fig_bar.update_layout(height=400, yaxis={"categoryorder": "total ascending"})
         st.plotly_chart(fig_bar, use_container_width=True)
 
-# ---- Narrative Summary ----
 st.markdown("#### Insights & Commentary")
 st.markdown(
     "Use the radio button above to switch between KPIs (Sales, Quantity, Profit, Margin Rate). "
     "The chart on the left shows how your selected KPI changes over time at the chosen granularity. "
     "On the right, you can see which products lead in terms of that KPI."
 )
-
-# ---- Data Drill-Down Section ----
 with st.expander("Show Detailed Data"):
     st.dataframe(df_filtered)
